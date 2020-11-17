@@ -8,9 +8,17 @@ public class HelpModule extends BaseModule {
         description = "Ping the bot",
         context = {Command.Context.GUILD, Command.Context.PRIVATE})
     public void ping() {
-        // TODO: impelemnt ping command
+        // TODO: implement ping command
         // something like:
         // ctx.reply("Pong!");
+    }
+
+    @Command(
+        key = "help",
+        description = "Lists usefull information about the bot and its commands",
+        context = {Command.Context.GUILD, Command.Context.PRIVATE})
+    public void help() {
+        //TODO implement help command
     }
 
 }
