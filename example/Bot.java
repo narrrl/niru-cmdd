@@ -9,9 +9,6 @@ import nirusu.nirucmd.CommandContext;
 import nirusu.nirucmd.CommandDispatcher;
 import nirusu.nirucmd.annotation.Command;
 
-/**
- * This class is not implemented yet, for now it just represents the basic idea
- * */
 public class Bot {
 
     public Bot(@Nonnull String token) {
