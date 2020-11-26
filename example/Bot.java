@@ -13,7 +13,6 @@ import nirusu.nirucmd.annotation.Command;
  * This class is not implemented yet, for now it just represents the basic idea
  * */
 public class Bot {
-    private CommandDispatcher dispatcher;
 
     public Bot(@Nonnull String token) {
         // create jd4 client
@@ -22,9 +21,8 @@ public class Bot {
         GatewayDiscordClient gateway = client.login().block();
         // create dispatcher
         dispatcher = new CommandDispatcher.Builder()
-            // add package that contains the commands
-            .addPackage("nirusu.nirubot.command")
-            .build();
+                // add package that contains the commands
+                .addPackage("nirusu.nirubot.command").build();
 
         // create trigge
         gateway.on(MessageCreateEvent.class).subscribe(event -> {
@@ -38,7 +36,8 @@ public class Bot {
             if (raw.startsWith(prefix) && raw.length() > prefix.length()) {
                 // create the CommandContext
                 CommandContext ctx = new CommandContext(event);
-                List<String> args = Arrays.asList(raw.split("\\w+"));
+                List<String> args = new ArrayList<>();
+                Collections.addAll(args, raw.substring(prefix.length()).split("\\s+"));
                 if (args.size() > 0) {
                     // get key to trigger command
                     String key = args.get(0);
@@ -47,8 +46,15 @@ public class Bot {
                     // set arguments for the command context
                     ctx.setArgs(args);
                     // run dispatcher
-                    dispatcher.run(ctx, key); }
+                    try {
+                        dispatcher.run(ctx, key);
+                    } catch (NoSuchCommandException e) {
+                        ctx.reply("Unknown command!");
+                    }
+                }
             }
         });
+
+        gateway.onDisconnect().block();
     }
 }
