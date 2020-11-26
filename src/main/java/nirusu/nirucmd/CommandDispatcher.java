@@ -61,6 +61,15 @@ public class CommandDispatcher {
         BaseModule module = getModuleWith(key);
         Method refl = getMethodWith(module, key);
         module.setCommandContext(ctx);
+        boolean wrongContext = true;
+        for (Command.Context context : refl.getAnnotation(Command.class).context()) {
+            if (ctx.isContext(context)) {
+                wrongContext = false;
+            }
+        }
+        if (wrongContext) {
+            throw new NoSuchCommandException();
+        }
         try {
             refl.invoke(module);
         } catch (IllegalAccessException |
