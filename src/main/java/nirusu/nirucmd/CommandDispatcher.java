@@ -45,6 +45,10 @@ public class CommandDispatcher {
         }
     }
 
+    /**
+     * Load all module class from the parsed build {@link Builder#packages}
+     * @param b the builder with the packages
+     */
     private CommandDispatcher(Builder b) {
         for (String pkg : b.packages) {
             Reflections ref = new Reflections(new ConfigurationBuilder()
@@ -56,11 +60,27 @@ public class CommandDispatcher {
     }
 
 
+    /**
+     * Finds a command with given key.
+     * 
+     * This will search for a fitting method in {@link #modules} and will invoke it.
+     * 
+     * The method must annote {@link nirusu.nirucmd.annotation.Command} and one of the keys in {@link nirusu.nirucmd.annotation.Command#key}
+     * must be equal to @param key
+     * 
+     * @param ctx represents the current command context (event, args, etc...)
+     * @throws NoSuchCommandException if no command could be found/wrong context
+     */
     public void run(@Nonnull CommandContext ctx, @Nonnull String key)
             throws NoSuchCommandException {
+        // Create new instance of the module with the wanted method
         BaseModule module = getModuleWith(key);
+        // get the method
         Method refl = getMethodWith(module, key);
+        // set command context
         module.setCommandContext(ctx);
+
+        // check if the command gets executed in the wrong context
         boolean wrongContext = true;
         for (Command.Context context : refl.getAnnotation(Command.class).context()) {
             if (ctx.isContext(context)) {
@@ -70,6 +90,8 @@ public class CommandDispatcher {
         if (wrongContext) {
             throw new NoSuchCommandException();
         }
+
+        // invoke aka run the command
         try {
             refl.invoke(module);
         } catch (IllegalAccessException |
@@ -81,11 +103,18 @@ public class CommandDispatcher {
         }
     }
 
+    /**
+     * Searches for a module with a method that gets triggert on given @param key
+     * 
+     * @return new instance of that module
+     * @throws NoSuchCommandException if no method with such key could be found
+     */
     private BaseModule getModuleWith(@Nonnull String key)
             throws NoSuchCommandException {
         for (Class<? extends BaseModule> md : modules) {
             if (hasMethodWith(md, key)) {
                 try {
+                    // try to create new instance of that module
                     return md.getConstructor().newInstance();
                 } catch (IllegalAccessException | InstantiationException
                         | InvocationTargetException | NoSuchMethodException e ) {
@@ -96,6 +125,12 @@ public class CommandDispatcher {
         throw new NoSuchCommandException();
     }
 
+    /**
+     * Search for a method with given @param key in the given @param module and return it
+     * 
+     * @return the method with the given key
+     * @throws NoSuchCommandException if no method was found
+     */
     private Method getMethodWith(@Nonnull BaseModule module, @Nonnull String key)
             throws NoSuchCommandException {
         for (Method refl : module.getClass().getMethods()) {
@@ -110,6 +145,11 @@ public class CommandDispatcher {
         throw new NoSuchCommandException();
     }
 
+    /**
+     * Checks if a given module @param module has a method with given key @param key
+     * 
+     * @return true if such a method exits else false
+     */
     private boolean hasMethodWith(@Nonnull Class<? extends BaseModule> module, @Nonnull String key) {
         Method[] methods = module.getDeclaredMethods();
         for (Method refl : methods) {
