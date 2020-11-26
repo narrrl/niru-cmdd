@@ -2,14 +2,15 @@ package nirusu.nirucmd;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import nirusu.nirucmd.annotation.Command;
 import nirusu.nirucmd.exception.NoSuchCommandException;
@@ -46,8 +47,11 @@ public class CommandDispatcher {
 
     private CommandDispatcher(Builder b) {
         for (String pkg : b.packages) {
-            Reflections ref = new Reflections(pkg);
-            modules = ref.getSubTypesOf(BaseModule.class);
+            Reflections ref = new Reflections(new ConfigurationBuilder()
+                .setUrls(ClasspathHelper.forPackage(pkg))
+                .setScanners(new SubTypesScanner())
+                );
+            this.modules = ref.getSubTypesOf(nirusu.nirucmd.BaseModule.class);
         }
     }
 
@@ -98,7 +102,8 @@ public class CommandDispatcher {
     }
 
     private boolean hasMethodWith(@Nonnull Class<? extends BaseModule> module, @Nonnull String key) {
-        for (Method refl : module.getClass().getMethods()) {
+        Method[] methods = module.getDeclaredMethods();
+        for (Method refl : methods) {
             if (refl.isAnnotationPresent(Command.class)) {
                 for (String k : refl.getAnnotation(Command.class).key()) {
                     if (k.equals(key)) {
