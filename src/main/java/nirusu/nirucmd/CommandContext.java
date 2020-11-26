@@ -78,4 +78,8 @@ public class CommandContext {
     public boolean isGuild() {
         return isContext(Command.Context.GUILD);
     }
+
+    public MessageCreateEvent getEvent() {
+        return this.event;
+    }
 }
