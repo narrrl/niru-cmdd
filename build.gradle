@@ -24,6 +24,9 @@ dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation 'com.google.guava:guava:29.0-jre'
     implementation("com.discord4j:discord4j-core:3.1.1")
+    // https://mvnrepository.com/artifact/org.reflections/reflections
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.5-RC2'
+
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.13'
