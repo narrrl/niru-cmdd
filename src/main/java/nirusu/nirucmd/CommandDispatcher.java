@@ -134,12 +134,8 @@ public class CommandDispatcher {
     private Method getMethodWith(@Nonnull BaseModule module, @Nonnull String key)
             throws NoSuchCommandException {
         for (Method refl : module.getClass().getMethods()) {
-            if (refl.isAnnotationPresent(Command.class)) {
-                for (String k : refl.getAnnotation(Command.class).key()) {
-                    if (k.equals(key)) {
-                        return refl;
-                    }
-                }
+            if (methodHasKey(refl, key)) {
+                return refl;
             }
         }
         throw new NoSuchCommandException();
@@ -153,14 +149,31 @@ public class CommandDispatcher {
     private boolean hasMethodWith(@Nonnull Class<? extends BaseModule> module, @Nonnull String key) {
         Method[] methods = module.getDeclaredMethods();
         for (Method refl : methods) {
-            if (refl.isAnnotationPresent(Command.class)) {
-                for (String k : refl.getAnnotation(Command.class).key()) {
-                    if (k.equals(key)) {
-                        return true;
-                    }
-                }
+            if (methodHasKey(refl, key)) {
+                return true;
             }
         }
+        return false;
+    }
+
+
+    /**
+     * Checks if a given method @param ref has the given key @param key
+     * 
+     * @return true if method annotes {@link nirusu.nirucmd.annotation.Command} and has the key else false
+     */
+    private boolean methodHasKey(@Nonnull Method ref, @Nonnull String key) {
+
+        if (!ref.isAnnotationPresent(Command.class)) {
+            return false;
+        }
+
+        for (String k : ref.getAnnotation(Command.class).key()) {
+            if (k.equals(key)) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
