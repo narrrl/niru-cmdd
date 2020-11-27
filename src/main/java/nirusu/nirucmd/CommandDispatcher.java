@@ -11,6 +11,8 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import nirusu.nirucmd.annotation.Command;
 import nirusu.nirucmd.exception.NoSuchCommandException;
@@ -26,6 +28,7 @@ import nirusu.nirucmd.exception.NoSuchCommandException;
  */
 
 public class CommandDispatcher {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommandDispatcher.class);
     private Set<Class<? extends BaseModule>> modules;
 
     public static class Builder {
@@ -96,10 +99,9 @@ public class CommandDispatcher {
             refl.invoke(module);
         } catch (IllegalAccessException |
                 InvocationTargetException e) {
-            e.printStackTrace();
+            LOGGER.error("Command couldn't be invoked. No public modifier?", e);
         } catch (IllegalArgumentException argsE) {
-            System.err.println("Commands shouldn't have parameters");
-            argsE.printStackTrace();
+            LOGGER.error("Commands shouldn't have parameters", argsE);
         }
     }
 
@@ -118,7 +120,7 @@ public class CommandDispatcher {
                     return md.getConstructor().newInstance();
                 } catch (IllegalAccessException | InstantiationException
                         | InvocationTargetException | NoSuchMethodException e ) {
-                    e.printStackTrace();
+                    LOGGER.error(String.format("Couldn't create module: %s", md.getSimpleName()), e);
                 }
             }
         }
