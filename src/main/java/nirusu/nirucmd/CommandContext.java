@@ -2,10 +2,14 @@ package nirusu.nirucmd;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
 import nirusu.nirucmd.annotation.Command;
@@ -46,9 +50,9 @@ public class CommandContext {
     /**
      * Shortcut for a reply with a given message @param message
      */
-    public void reply(@Nonnull String message) {
+    public Message reply(@Nonnull String message) {
         MessageChannel m = event.getMessage().getChannel().block();
-        m.createMessage(message).block();
+        return m.createMessage(message).block();
     }
 
     /**
@@ -60,6 +64,10 @@ public class CommandContext {
         return this.context.equals(context);
     }
 
+    public Optional<User> getAuthor() {
+        return event.getMessage().getAuthor();
+    }
+
 
     /**
      * !!! ARGS IS NOT MODIFIABLE !!!
@@ -67,8 +75,8 @@ public class CommandContext {
      *
      * @return list of all arguments
      */
-    public List<String> getArgs() {
-        return this.args;
+    public Optional<List<String>> getArgs() {
+        return Optional.of(args);
     }
 
     public boolean isPrivate() {
@@ -81,5 +89,9 @@ public class CommandContext {
 
     public MessageCreateEvent getEvent() {
         return this.event;
+    }
+
+    public Optional<Guild> getGuild() {
+        return event.getGuild().blockOptional();
     }
 }
