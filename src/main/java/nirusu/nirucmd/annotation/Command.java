@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 public @interface Command {
     String[] key();
     String description();
-    Context[] context();
+    Context[] context() default {Context.GUILD, Context.PRIVATE};
     public enum Context {
         GUILD, PRIVATE
     }
