@@ -8,10 +8,12 @@ import javax.annotation.Nonnull;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
+import discord4j.rest.util.Permission;
 import nirusu.nirucmd.annotation.Command;
 
 /**
@@ -93,5 +95,25 @@ public class CommandContext {
 
     public Optional<Guild> getGuild() {
         return event.getGuild().blockOptional();
+    }
+
+    /**
+     * Checks if the author has the permission @param p
+     * 
+     * @return if contex is not guild return false or user doesnt have the permission
+     */
+    public boolean hasGuildPermission(Permission p) {
+
+        if (!isContext(Command.Context.GUILD)) {
+            return false;
+        }
+
+        Guild g = getGuild().orElse(null);
+        User u = getAuthor().orElse(null);
+
+        if (u == null || g == null) {
+            return false;
+        }
+        return g.getMemberById(u.getId()).block().getBasePermissions().block().contains(p);
     }
 }
