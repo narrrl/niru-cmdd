@@ -116,4 +116,15 @@ public class CommandContext {
         }
         return g.getMemberById(u.getId()).block().getBasePermissions().block().contains(p);
     }
+
+    public Optional<Member> getMember() {
+        Guild g = getGuild().get();
+        User u = getAuthor().get();
+
+        if (g == null || u == null) {
+            return Optional.empty();
+        }
+
+        return g.getMemberById(u.getId()).blockOptional();
+    }
 }
