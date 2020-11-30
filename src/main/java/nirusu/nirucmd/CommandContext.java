@@ -1,5 +1,9 @@
 package nirusu.nirucmd;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -13,15 +17,17 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
+import discord4j.core.object.entity.channel.TextChannel;
 import discord4j.rest.util.Permission;
 import nirusu.nirucmd.annotation.Command;
 
 /**
- * This class represents the current command context (Context (Guild, Private, ...), Event, Message etc.)
- * and contains useful methods to interact with the bot.
+ * This class represents the current command context (Context (Guild, Private,
+ * ...), Event, Message etc.) and contains useful methods to interact with the
+ * bot.
  */
 public class CommandContext {
-
+    private static final int FILE_SIZE_MAX = 8388119;
     private List<String> args;
     private final Command.Context context;
     private final MessageCreateEvent event;
@@ -39,7 +45,7 @@ public class CommandContext {
         } else if (type.equals(Channel.Type.GUILD_TEXT)) {
             context = Command.Context.GUILD;
         } else {
-            //TODO: write own exception
+            // TODO: write own exception
             throw new IllegalArgumentException("Invalid Context");
         }
     }
@@ -47,7 +53,6 @@ public class CommandContext {
     public void setArgs(@Nonnull List<String> args) {
         this.args = Collections.unmodifiableList(args);
     }
-
 
     /**
      * Shortcut for a reply with a given message @param message
@@ -70,10 +75,8 @@ public class CommandContext {
         return event.getMessage().getAuthor();
     }
 
-
     /**
-     * !!! ARGS IS NOT MODIFIABLE !!!
-     * {@link Collections#unmodifiableList}
+     * !!! ARGS IS NOT MODIFIABLE !!! {@link Collections#unmodifiableList}
      *
      * @return list of all arguments
      */
@@ -100,7 +103,8 @@ public class CommandContext {
     /**
      * Checks if the author has the permission @param p
      * 
-     * @return if contex is not guild return false or user doesnt have the permission
+     * @return if contex is not guild return false or user doesnt have the
+     *         permission
      */
     public boolean hasGuildPermission(Permission p) {
 
@@ -126,5 +130,23 @@ public class CommandContext {
         }
 
         return g.getMemberById(u.getId()).blockOptional();
+    }
+
+    public void sendFile(File f) {
+        getChannel().createMessage(mes -> {
+            try {
+                mes.addFile(f.getName(), new FileInputStream(f));
+            } catch (FileNotFoundException e) {
+                return;
+            }
+        }).block();
+	}
+
+	public long getMaxFileSize() {
+        return FILE_SIZE_MAX;
+    }
+    
+    public MessageChannel getChannel() {
+        return event.getMessage().getChannel().block();
     }
 }
