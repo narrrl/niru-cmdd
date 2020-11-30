@@ -11,6 +11,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,12 +54,14 @@ public class CommandDispatcher {
      * @param b the builder with the packages
      */
     private CommandDispatcher(Builder b) {
+        this.modules = new HashSet<>();
         for (String pkg : b.packages) {
             Reflections ref = new Reflections(new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forPackage(pkg))
                 .setScanners(new SubTypesScanner())
+                .filterInputsBy(new FilterBuilder().includePackage(pkg))
                 );
-            this.modules = ref.getSubTypesOf(nirusu.nirucmd.BaseModule.class);
+            this.modules.addAll(ref.getSubTypesOf(nirusu.nirucmd.BaseModule.class));
         }
     }
 
