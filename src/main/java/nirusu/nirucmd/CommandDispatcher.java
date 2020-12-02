@@ -216,7 +216,7 @@ public class CommandDispatcher {
     /**
      * Returns a list of all commands (Methods which annote {@link nirusu.nirucmd.annotation.Command})
      * 
-     * @return
+     * @return all methods in {@link #modules} which annote {@link nirusu.nirucmd.annotation.Command}
      */
     public List<Method> getMethods() {
         return modules.stream().flatMap(module 
