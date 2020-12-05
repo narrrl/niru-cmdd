@@ -43,11 +43,9 @@ public class CommandContext {
         Channel.Type type = event.getMessage().getChannel().block().getType();
         if (type.equals(Channel.Type.DM)) {
             context = Command.Context.PRIVATE;
-        } else if (type.equals(Channel.Type.GUILD_TEXT)) {
-            context = Command.Context.GUILD;
         } else {
-            throw new InvalidContextException("Invalid Context");
-        }
+            context = Command.Context.GUILD;
+        } 
     }
 
     public void setArgs(@Nonnull List<String> args) {
