@@ -20,6 +20,7 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
 import nirusu.nirucmd.annotation.Command;
+import nirusu.nirucmd.exception.InvalidContextException;
 
 /**
  * This class represents the current command context (Context (Guild, Private,
@@ -39,13 +40,14 @@ public class CommandContext {
      */
     public CommandContext(@Nonnull MessageCreateEvent event) {
         this.event = event;
-        // TODO: better system to detect context of command execution
         Channel.Type type = event.getMessage().getChannel().block().getType();
         if (type.equals(Channel.Type.DM)) {
             context = Command.Context.PRIVATE;
-        } else { // default context is guild
+        } else if (type.equals(Channel.Type.GUILD_TEXT)) {
             context = Command.Context.GUILD;
-        } 
+        } else {
+            throw new InvalidContextException("Invalid Context");
+        }
     }
 
     public void setArgs(@Nonnull List<String> args) {
@@ -80,6 +82,20 @@ public class CommandContext {
      */
     public Optional<List<String>> getArgs() {
         return Optional.ofNullable(args);
+    }
+
+    public String getUserInput() {
+        if (args == null) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String str : args) {
+            builder.append(str).append(" ");
+        }
+        if (builder.length() == 0) {
+            return "";
+        }
+        return builder.substring(0, builder.length() - 1);
     }
 
     public boolean isPrivate() {
