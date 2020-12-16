@@ -109,6 +109,7 @@ guilds/
 
 #tmp dir
 /tmp/
+.factorypath
 
 #images
 /images/
