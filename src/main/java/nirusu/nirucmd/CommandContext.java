@@ -29,7 +29,9 @@ import nirusu.nirucmd.exception.InvalidContextException;
  */
 public class CommandContext {
     private static final int FILE_SIZE_MAX = 8388119;
+    private static final String EMTPY_STRING = "";
     private List<String> args;
+    private String key;
     private final Command.Context context;
     private final MessageCreateEvent event;
 
@@ -54,12 +56,25 @@ public class CommandContext {
         this.args = Collections.unmodifiableList(args);
     }
 
+    public String getKey() {
+        if (key != null) {
+            return key;
+        }
+        return getArgs().map(argsList -> {
+            if (argsList.isEmpty()) {
+                return EMTPY_STRING;
+            }
+            return argsList.get(0);
+        }).orElse(EMTPY_STRING);
+    }
+
     /**
      * Shortcut for a reply with a given message @param message
      */
-    public Message reply(@Nonnull String message) {
-        MessageChannel m = event.getMessage().getChannel().block();
-        return m.createMessage(message).block();
+    public Optional<Message> reply(@Nonnull String message) {
+        return event.getMessage().getChannel().blockOptional().map(m -> {
+            return m.createMessage(message).blockOptional();
+        }).orElse(Optional.empty());
     }
 
     /**
