@@ -63,18 +63,12 @@ public class Bot {
             if (raw.startsWith(prefix) && raw.length() > prefix.length()) {
                 // create the CommandContext
                 CommandContext ctx = new CommandContext(event);
-                List<String> args = new ArrayList<>();
-                Collections.addAll(args, raw.substring(prefix.length()).split("\\s+"));
-                if (args.size() > 0) {
-                    // get key to trigger command
-                    String key = args.get(0);
-                    ctx.setArgs(args);
-                    // run dispatcher
-                    try {
-                        dispatcher.run(ctx, key);
-                    } catch (NoSuchCommandException e) {
-                        ctx.reply("Unknown command!");
-                    }
+                ctx.setArgs(Arras.asList(raw.substring(prefix.length()).split("\\s+")));
+                // run dispatcher
+                try {
+                    dispatcher.run(ctx, ctx.getKey());
+                } catch (NoSuchCommandException e) {
+                    ctx.reply("Unknown command!");
                 }
             }
         });
