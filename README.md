@@ -15,7 +15,7 @@ This is a command system for [Discord4J](https://github.com/Discord4J/Discord4J)
 		</repository>
 	</repositories>
 
-    <dependency>
+    	<dependency>
 	    <groupId>com.github.Nirusu99</groupId>
 	    <artifactId>niru-cmdd</artifactId>
 	    <version>$VERSION</version>
