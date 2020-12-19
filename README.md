@@ -37,14 +37,6 @@ public class HelpModule extends BaseModule {
         ctx.reply("Pong!");
     }
 
-    @Command(
-        key = "help",
-        description = "Lists usefull information about the bot and its commands",
-        context = {Command.Context.GUILD, Command.Context.PRIVATE})
-    public void help() {
-        //TODO implement help command
-    }
-
 }
 
 public class Bot {
@@ -76,9 +68,6 @@ public class Bot {
                 if (args.size() > 0) {
                     // get key to trigger command
                     String key = args.get(0);
-                    // remove the key from the arguments
-                    args.remove(key);
-                    // set arguments for the command context
                     ctx.setArgs(args);
                     // run dispatcher
                     try {
