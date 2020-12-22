@@ -15,12 +15,10 @@ import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
 import nirusu.nirucmd.annotation.Command;
-import nirusu.nirucmd.exception.InvalidContextException;
 
 /**
  * This class represents the current command context (Context (Guild, Private,
@@ -42,18 +40,17 @@ public class CommandContext {
      */
     public CommandContext(@Nonnull MessageCreateEvent event) {
         this.event = event;
-        Channel.Type type = event.getMessage().getChannel().block().getType();
-        if (type.equals(Channel.Type.DM)) {
-            context = Command.Context.PRIVATE;
-        } else if (type.equals(Channel.Type.GUILD_TEXT)) {
-            context = Command.Context.GUILD;
-        } else {
-            throw new InvalidContextException("Invalid Context");
-        }
+        context = event.getMessage().getChannel().blockOptional()
+            .map(ch -> Command.Context.getContextFor(ch.getType()))
+            .orElse(Command.Context.INVALID);
     }
 
     public void setArgs(@Nonnull List<String> args) {
         this.args = Collections.unmodifiableList(args);
+    }
+
+    public void setKey(@Nonnull String key) {
+        this.key = key;
     }
 
     public String getKey() {
