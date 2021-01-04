@@ -3,13 +3,11 @@ package nirusu.nirucmd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -51,6 +49,7 @@ public class CommandContext {
     public void setArgs(@Nonnull List<String> args) {
         this.args = Collections.unmodifiableList(args);
     }
+
 
     public void setArgsAndKey(String userInput, String seperator) {
         List<String> splitInput = Arrays.asList(userInput.split(seperator));
