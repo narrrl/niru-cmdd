@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -51,12 +52,13 @@ public class CommandContext {
     }
 
 
-    public void setArgsAndKey(String userInput, String seperator) {
-        List<String> splitInput = Arrays.asList(userInput.split(seperator));
-
-        this.args = splitInput.stream().filter(item -> splitInput.indexOf(item) != 0).collect(Collectors.toList());
-
-        this.key = splitInput.stream().findFirst().orElse("");
+    public void setArgsAndKey(String[] userInput, String key, boolean removeFirstEntry) {
+        if (removeFirstEntry) {
+            this.args = Collections.unmodifiableList(Stream.of(userInput).skip(1).collect(Collectors.toList()));
+        } else {
+            this.args = Arrays.asList(userInput);
+        }
+        this.key = key;
     }
 
     public String getKey() {
@@ -108,14 +110,14 @@ public class CommandContext {
 
     public String getUserInput() {
         if (args == null) {
-            return "";
+            return EMTPY_STRING;
         }
         StringBuilder builder = new StringBuilder();
         for (String str : args) {
             builder.append(str).append(" ");
         }
         if (builder.length() == 0) {
-            return "";
+            return EMTPY_STRING;
         }
         return builder.substring(0, builder.length() - 1);
     }
