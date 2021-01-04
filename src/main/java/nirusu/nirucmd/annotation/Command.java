@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import discord4j.core.object.entity.channel.Channel;
+import discord4j.core.object.entity.channel.Channel.Type;;
 
 /**
  * This class contains the metadata for every command.
@@ -19,18 +19,5 @@ import discord4j.core.object.entity.channel.Channel;
 public @interface Command {
     String[] key();
     String description();
-    Context[] context() default {Context.GUILD, Context.PRIVATE};
-    public  enum Context {
-        GUILD, PRIVATE, INVALID;
-
-        public static Context getContextFor(Channel.Type type) {
-            int v = type.getValue();
-            if (v == 1) {
-                return PRIVATE;
-            } else if (v == 0 || v > 4) {
-                return GUILD;
-            }
-            return INVALID;
-        }
-    }
+    Type[] context() default {Type.GUILD_TEXT, Type.GUILD_NEWS, Type.GUILD_STORE, Type.DM, Type.GROUP_DM};
 }

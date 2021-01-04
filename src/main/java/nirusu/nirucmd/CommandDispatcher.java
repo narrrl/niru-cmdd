@@ -18,6 +18,7 @@ import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import discord4j.core.object.entity.channel.Channel.Type;
 import nirusu.nirucmd.annotation.Command;
 import nirusu.nirucmd.exception.DuplicateKeysException;
 import nirusu.nirucmd.exception.NoSuchCommandException;
@@ -97,7 +98,7 @@ public class CommandDispatcher {
 
         // check if the command gets executed in the wrong context
         boolean wrongContext = true;
-        for (Command.Context context : refl.getAnnotation(Command.class).context()) {
+        for (Type context : refl.getAnnotation(Command.class).context()) {
             if (ctx.isContext(context)) {
                 wrongContext = false;
             }
@@ -222,5 +223,12 @@ public class CommandDispatcher {
         return modules.stream().flatMap(module 
             -> Arrays.asList(module.getDeclaredMethods()).stream().filter(m 
             -> m.isAnnotationPresent(Command.class))).collect(Collectors.toList());
+    }
+
+    /**
+     * Retuns a set of all modules classes
+     */
+    public Set<Class<? extends BaseModule>> getModules() {
+        return this.modules;
     }
 }

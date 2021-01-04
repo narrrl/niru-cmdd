@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -15,10 +16,11 @@ import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.Channel;
+import discord4j.core.object.entity.channel.Channel.Type;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.rest.util.Permission;
 import discord4j.rest.util.PermissionSet;
-import nirusu.nirucmd.annotation.Command;
 
 /**
  * This class represents the current command context (Context (Guild, Private,
@@ -30,7 +32,7 @@ public class CommandContext {
     private static final String EMTPY_STRING = "";
     private List<String> args;
     private String key;
-    private final Command.Context context;
+    private final Type context;
     private final MessageCreateEvent event;
 
     /**
@@ -40,16 +42,15 @@ public class CommandContext {
      */
     public CommandContext(@Nonnull MessageCreateEvent event) {
         this.event = event;
-        context = event.getMessage().getChannel().blockOptional()
-            .map(ch -> Command.Context.getContextFor(ch.getType()))
-            .orElse(Command.Context.INVALID);
+        context = event.getMessage().getChannel().blockOptional().map(Channel::getType).orElse(Channel.Type.UNKNOWN);
     }
 
     public void setArgs(@Nonnull List<String> args) {
         this.args = Collections.unmodifiableList(args);
     }
 
-    public void setKey(@Nonnull String key) {
+    public void setArgsAndKey(@Nonnull List<String> args, @Nonnull String key) {
+        this.args = Collections.unmodifiableList(args.stream().filter(item -> !item.equals(key)).collect(Collectors.toList()));
         this.key = key;
     }
 
@@ -63,6 +64,10 @@ public class CommandContext {
             }
             return argsList.get(0);
         }).orElse(EMTPY_STRING);
+    }
+
+    public void setKey(@Nonnull String key) {
+        this.key = key;
     }
 
     /**
@@ -79,7 +84,7 @@ public class CommandContext {
      *
      * @return true if {@link #context} equals @param context
      */
-    public boolean isContext(Command.Context context) {
+    public boolean isContext(Type context) {
         return this.context.equals(context);
     }
 
@@ -111,11 +116,11 @@ public class CommandContext {
     }
 
     public boolean isPrivate() {
-        return isContext(Command.Context.PRIVATE);
+        return isContext(Type.DM);
     }
 
     public boolean isGuild() {
-        return isContext(Command.Context.GUILD);
+        return isContext(Type.GUILD_NEWS) || isContext(Type.GUILD_STORE) || isContext(Type.GUILD_TEXT);
     }
 
     public MessageCreateEvent getEvent() {
