@@ -42,38 +42,39 @@ public class HelpModule extends BaseModule {
 public class Bot {
 
     public Bot(@Nonnull String token) {
-        // create jd4 client
-        DiscordClient client = DiscordClient.create(token);
-        // connect to gateway
-        GatewayDiscordClient gateway = client.login().block();
         // create dispatcher
         dispatcher = new CommandDispatcher.Builder()
                 // add package that contains the commands
                 .addPackage("nirusu.nirubot.command").build();
+        // create jd4 client
+        DiscordClient client = DiscordClient.create(token);
+        // connect to gateway
+        client.login().blockOptional().ifPresent(gateway -> {
+            // create trigge
+            gateway.on(MessageCreateEvent.class).subscribe(event -> {
 
-        // create trigge
-        gateway.on(MessageCreateEvent.class).subscribe(event -> {
-
-            Message mes = event.getMessage();
-            // get message content
-            String raw = mes.getContent();
-            raw = raw == null ? "" : raw;
-            String prefix = "!";
-            // check if message starts with prefix !
-            if (raw.startsWith(prefix) && raw.length() > prefix.length()) {
-                // create the CommandContext
-                CommandContext ctx = new CommandContext(event);
-                ctx.setArgs(Arras.asList(raw.substring(prefix.length()).split("\\s+")));
-                // run dispatcher
-                try {
-                    dispatcher.run(ctx, ctx.getKey());
-                } catch (NoSuchCommandException e) {
-                    ctx.reply("Unknown command!");
+                Message mes = event.getMessage();
+                // get message content
+                String raw = mes.getContent();
+                raw = raw == null ? "" : raw;
+                String prefix = "!";
+                // check if message starts with prefix !
+                if (raw.startsWith(prefix) && raw.length() > prefix.length()) {
+                    // create args by separating each argument at whitespaces
+                    String[] args = raw.substring(prefix.length()).split("\\s+");
+                    CommandContext ctx = new CommandContext(event);
+                    // set args for command context
+                    ctx.setArgsAndKey(args, args[0], true);
+                    CommandToRun cmd = dispatcher.getCommand(ctx, ctx.getKey());
+                    cmd.run();
                 }
-            }
+            });
+
+            gateway.onDisconnect().block();
         });
 
-        gateway.onDisconnect().block();
     }
 }
+
+
 ```
