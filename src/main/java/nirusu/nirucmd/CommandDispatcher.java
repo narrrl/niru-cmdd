@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import discord4j.core.object.entity.channel.Channel.Type;
 import nirusu.nirucmd.annotation.Command;
 import nirusu.nirucmd.exception.DuplicateKeysException;
-import nirusu.nirucmd.exception.NoSuchCommandException;
 
 /**
  * This class handles all commands
@@ -87,35 +87,29 @@ public class CommandDispatcher {
      * @param ctx represents the current command context (event, args, etc...)
      * @throws NoSuchCommandException if no command could be found/wrong context
      */
-    public void run(@Nonnull CommandContext ctx, @Nonnull String key)
-            throws NoSuchCommandException {
+    public CommandToRun getCommand(@Nonnull CommandContext ctx, @Nonnull String key) {
         // Create new instance of the module with the wanted method
-        BaseModule module = getModuleWith(key);
-        // get the method
-        Method refl = getMethodWith(module, key);
-        // set command context
-        module.setCommandContext(ctx);
+        return getModuleWith(key)
+            .map(module -> getMethodWith(module, key)
+                .map(refl -> {
+                    // set command context
+                    module.setCommandContext(ctx);
 
-        // check if the command gets executed in the wrong context
-        boolean wrongContext = true;
-        for (Type context : refl.getAnnotation(Command.class).context()) {
-            if (ctx.isContext(context)) {
-                wrongContext = false;
-            }
-        }
-        if (wrongContext) {
-            throw new NoSuchCommandException();
-        }
-
-        // invoke aka run the command
-        try {
-            refl.invoke(module);
-        } catch (IllegalAccessException |
-                InvocationTargetException e) {
-            LOGGER.error("Command couldn't be invoked. No public modifier?", e);
-        } catch (IllegalArgumentException argsE) {
-            LOGGER.error("Commands shouldn't have parameters", argsE);
-        }
+                    // check if it gets executed in wrong context
+                    boolean wrongContext = true;
+                    for (Type context : refl.getAnnotation(Command.class).context()) {
+                        if (ctx.isContext(context)) {
+                            wrongContext = false;
+                        }
+                    }
+                    // if so return invalid
+                    if (wrongContext) {
+                        return CommandToRun.getInvalid();
+                    }
+                    // else return the new command to run
+                    return new CommandToRun(refl, module);})
+                .orElse(CommandToRun.getInvalid()))
+            .orElse(CommandToRun.getInvalid());
     }
 
     /**
@@ -124,20 +118,19 @@ public class CommandDispatcher {
      * @return new instance of that module
      * @throws NoSuchCommandException if no method with such key could be found
      */
-    private BaseModule getModuleWith(@Nonnull String key)
-            throws NoSuchCommandException {
+    private Optional<BaseModule> getModuleWith(@Nonnull String key) {
         for (Class<? extends BaseModule> md : modules) {
             if (hasMethodWith(md, key)) {
                 try {
                     // try to create new instance of that module
-                    return md.getConstructor().newInstance();
+                    return Optional.ofNullable(md.getConstructor().newInstance());
                 } catch (IllegalAccessException | InstantiationException
                         | InvocationTargetException | NoSuchMethodException e ) {
                     LOGGER.error(String.format("Couldn't create module: %s", md.getSimpleName()), e);
                 }
             }
         }
-        throw new NoSuchCommandException();
+        return Optional.empty();
     }
 
     /**
@@ -146,14 +139,13 @@ public class CommandDispatcher {
      * @return the method with the given key
      * @throws NoSuchCommandException if no method was found
      */
-    private Method getMethodWith(@Nonnull BaseModule module, @Nonnull String key)
-            throws NoSuchCommandException {
+    private Optional<Method> getMethodWith(@Nonnull BaseModule module, @Nonnull String key) {
         for (Method refl : module.getClass().getMethods()) {
             if (methodHasKey(refl, key)) {
-                return refl;
+                return Optional.of(refl);
             }
         }
-        throw new NoSuchCommandException();
+        return Optional.empty();
     }
 
     /**
