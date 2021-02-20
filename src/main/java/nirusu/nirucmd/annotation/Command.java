@@ -18,6 +18,6 @@ import discord4j.core.object.entity.channel.Channel.Type;;
 @Target(ElementType.METHOD)
 public @interface Command {
     String[] key();
-    String description();
+    String description() default "";
     Type[] context() default {Type.GUILD_TEXT, Type.GUILD_NEWS, Type.GUILD_STORE, Type.DM, Type.GROUP_DM};
 }

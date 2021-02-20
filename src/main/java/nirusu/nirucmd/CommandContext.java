@@ -3,10 +3,12 @@ package nirusu.nirucmd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,9 +22,9 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.Channel.Type;
+import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.rest.util.Permission;
-import discord4j.rest.util.PermissionSet;
 
 /**
  * This class represents the current command context (Context (Guild, Private,
@@ -50,7 +52,6 @@ public class CommandContext {
     public void setArgs(@Nonnull List<String> args) {
         this.args = Collections.unmodifiableList(args);
     }
-
 
     public void setArgsAndKey(String[] userInput, String key, boolean removeFirstEntry) {
         if (removeFirstEntry) {
@@ -82,6 +83,12 @@ public class CommandContext {
      */
     public Optional<Message> reply(@Nonnull String message) {
         return event.getMessage().getChannel().blockOptional().map(m -> {
+            return m.createMessage(spec -> spec.setContent(message).setMessageReference(event.getMessage().getId())).blockOptional();
+        }).orElse(Optional.empty());
+    }
+
+    public Optional<Message> send(@Nonnull String message) {
+        return event.getMessage().getChannel().blockOptional().map(m -> {
             return m.createMessage(message).blockOptional();
         }).orElse(Optional.empty());
     }
@@ -108,18 +115,15 @@ public class CommandContext {
         return Optional.ofNullable(args);
     }
 
+    public List<String> getArgsOrEmpty() {
+        return args == null ? Collections.emptyList() : Collections.unmodifiableList(args);
+    }
+
     public String getUserInput() {
         if (args == null) {
             return EMTPY_STRING;
         }
-        StringBuilder builder = new StringBuilder();
-        for (String str : args) {
-            builder.append(str).append(" ");
-        }
-        if (builder.length() == 0) {
-            return EMTPY_STRING;
-        }
-        return builder.substring(0, builder.length() - 1);
+        return args.stream().collect(Collectors.joining(" "));
     }
 
     public boolean isPrivate() {
@@ -145,60 +149,55 @@ public class CommandContext {
      *         permission
      */
     public boolean hasGuildPermission(Permission p) {
-        Optional<PermissionSet> perms = getMember().flatMap(member
-            -> member.getBasePermissions().blockOptional());
-        if (perms.isPresent()) {
-            return perms.get().contains(p);
-        }
-        return false;
+        return getMember().flatMap(member -> member.getBasePermissions().blockOptional())
+                .map(perms -> perms.contains(p)).orElse(false);
     }
 
     public Optional<Member> getMember() {
-        return getGuild().flatMap( guild 
-            -> getAuthor().flatMap(user 
-            -> guild.getMemberById(user.getId()).blockOptional())
-        );
+        return getGuild()
+                .flatMap(guild -> getAuthor().flatMap(user -> guild.getMemberById(user.getId()).blockOptional()));
     }
 
     public Optional<Message> sendFile(File f) {
-        return getChannel().flatMap(ch -> ch.createMessage(mes -> 
-            {
+        return getChannel().flatMap(ch -> ch.createMessage(mes -> {
             try {
                 mes.addFile(f.getName(), new FileInputStream(f));
             } catch (FileNotFoundException e) {
                 CommandDispatcher.getLogger().error(e.getMessage(), e);
             }
-        }
-        ).blockOptional());
-	}
+        }).blockOptional());
+    }
 
-	public static long getMaxFileSize() {
+    public long getMaxFileSize() {
         return FILE_SIZE_MAX;
     }
-    
+
     public Optional<MessageChannel> getChannel() {
         return event.getMessage().getChannel().blockOptional();
     }
-
 
     public Optional<User> getSelf() {
         return event.getClient().getSelf().blockOptional();
     }
 
     public Optional<VoiceState> getSelfVoiceState() {
-        return getSelfMember().flatMap(self 
-            -> self.getVoiceState().blockOptional());
+        return getSelfMember().flatMap(self -> self.getVoiceState().blockOptional());
     }
 
     public Optional<Member> getSelfMember() {
-        return getSelf().flatMap(self 
-            -> getGuild().flatMap(guild 
-            -> guild.getMemberById(self.getId()).blockOptional())
-        );
+        return getSelf()
+                .flatMap(self -> getGuild().flatMap(guild -> guild.getMemberById(self.getId()).blockOptional()));
     }
 
     public Optional<VoiceState> getAuthorVoiceState() {
-        return getMember().flatMap(member 
-            -> member.getVoiceState().blockOptional());
+        return getMember().flatMap(member -> member.getVoiceState().blockOptional());
+    }
+
+    public List<User> getMentionedUsers() {
+        return event.getMessage().getUserMentions().collectList().blockOptional().orElse(new ArrayList<>());
+    }
+
+    public Optional<Message> createEmbed(Consumer<? super EmbedCreateSpec> spec) {
+        return getChannel().map(ch -> ch.createEmbed(spec).blockOptional()).orElse(Optional.empty());
     }
 }
